@@ -194,6 +194,12 @@ def _parse_pdb_header_list(header):
         "source": {"1": {"misc": ""}},
         "has_missing_residues": False,
         "missing_residues": [],
+        "helices": {},
+        "sheets": {},
+        "ss_bonds": {},
+        "links": {},
+        "cis_peptides": {},
+        "sites": {},
     }
 
     pdbh_dict["structure_reference"] = _get_references(header)
@@ -201,6 +207,7 @@ def _parse_pdb_header_list(header):
     comp_molid = "1"
     last_comp_key = "misc"
     last_src_key = "misc"
+    old_sheet_id = ""
 
     for hh in header:
         h = re.sub(r"[\s\n\r]*\Z", "", hh)  # chop linebreaks off
@@ -318,6 +325,40 @@ def _parse_pdb_header_list(header):
                             pdbh_dict["astral"][remark_99_keyval[0]] = remark_99_keyval[
                                 1
                             ]
+        elif key == "HELIX ":
+            pdbh_dict["helices"][h[(" ", int(h[21:24]), h[25])]] = [int(h[7:9]),
+                                                                          h[11:13],
+                                                                          h[15:17],
+                                                                          h[19],
+                                                                          int(h[21:24]),
+                                                                          h[25],
+                                                                          h[27:29],
+                                                                          int(h[33:36]),
+                                                                          h[37],
+                                                                          int(h[38:39]),
+                                                                          h[41-70].strip(),
+                                                                          int(h[71:75])]
+        elif key == "SHEET ":
+            pdbh_dict["sheets"][h[(" ", int(h[22:25]), h[26])]] = [int(h[7:9]),
+                                                                    h[11:13],
+                                                                    int(h[14:15]),
+                                                                    h[17:19],
+                                                                    h[21],
+                                                                    int(h[22:25]),
+                                                                    h[26],
+                                                                    h[28:30],
+                                                                    h[32],
+                                                                    int(h[38:39]),
+                                                                    h[41:44],
+                                                                    h[45:47],
+                                                                    h[49],
+                                                                    int(h[50:53]),
+                                                                    h[54],
+                                                                    h[56:59],
+                                                                    h[60:62],
+                                                                    h[64],
+                                                                    h[65:68],
+                                                                    h[69]]
         else:
             # print(key)
             pass

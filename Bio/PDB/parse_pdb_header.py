@@ -325,40 +325,65 @@ def _parse_pdb_header_list(header):
                             pdbh_dict["astral"][remark_99_keyval[0]] = remark_99_keyval[
                                 1
                             ]
-        elif key == "HELIX ":
-            pdbh_dict["helices"][h[(" ", int(h[21:24]), h[25])]] = [int(h[7:9]),
-                                                                          h[11:13],
-                                                                          h[15:17],
-                                                                          h[19],
-                                                                          int(h[21:24]),
-                                                                          h[25],
-                                                                          h[27:29],
-                                                                          int(h[33:36]),
-                                                                          h[37],
-                                                                          int(h[38:39]),
-                                                                          h[41-70].strip(),
-                                                                          int(h[71:75])]
-        elif key == "SHEET ":
-            pdbh_dict["sheets"][h[(" ", int(h[22:25]), h[26])]] = [int(h[7:9]),
-                                                                    h[11:13],
-                                                                    int(h[14:15]),
-                                                                    h[17:19],
-                                                                    h[21],
-                                                                    int(h[22:25]),
-                                                                    h[26],
-                                                                    h[28:30],
-                                                                    h[32],
-                                                                    int(h[38:39]),
-                                                                    h[41:44],
-                                                                    h[45:47],
-                                                                    h[49],
-                                                                    int(h[50:53]),
-                                                                    h[54],
-                                                                    h[56:59],
-                                                                    h[60:62],
-                                                                    h[64],
-                                                                    h[65:68],
-                                                                    h[69]]
+        elif key == "HELIX":
+            pdbh_dict["helices"][(" ", int(hh[21:25]), hh[25])] = [int(hh[7:10]),
+                                                                   hh[11:14],
+                                                                   hh[15:18],
+                                                                   hh[19],
+                                                                   int(hh[21:25]),
+                                                                   hh[25],
+                                                                   hh[27:30],
+                                                                   int(hh[33:37]),
+                                                                   hh[37],
+                                                                   int(hh[38:40]),
+                                                                   hh[40:70].strip(),
+                                                                   int(hh[71:76])]
+        elif key == "SHEET":
+            strand = [int(hh[7:10]),
+                      hh[11:14],
+                      int(hh[14:16]),
+                      hh[17:20],
+                      hh[21],
+                      int(hh[22:26]),
+                      hh[26],
+                      hh[28:31],
+                      hh[32],
+                      int(hh[38:40]),
+                      None,
+                      None,
+                      None,
+                      None,
+                      None,
+                      None,
+                      None,
+                      None,
+                      None,
+                      None]
+            if strand[9]:
+                strand[10:20] = [hh[41:45],
+                                 hh[45:48],
+                                 hh[49],
+                                 int(hh[50:54]),
+                                 hh[54],
+                                 hh[56:60],
+                                 hh[60:63],
+                                 hh[64],
+                                 int(hh[65:69]),
+                                 hh[69]]
+            res_id = (" ", strand[5], strand[6])
+            try:
+                pdbh_dict["sheets"][res_id]
+            except Exception:                                   # empty entry
+                pdbh_dict["sheets"][res_id] = strand
+            else:
+                if pdbh_dict["sheets"][res_id][9]:                  # is forked sheet
+                    if isinstance(pdbh_dict["sheets"][res_id][0], int): # if 1st entry is not a list create one
+                        pdbh_dict["sheets"][res_id] = [pdbh_dict["sheets"][res_id]].append(strand)
+                    else:                                               # append to the list
+                        pdbh_dict["sheets"][res_id] = pdbh_dict["sheets"][res_id].append(strand)
+                else:                                               # is barrel
+                    pdbh_dict["sheets"][res_id][10:20] = strand[10:20]
+            
         else:
             # print(key)
             pass

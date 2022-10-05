@@ -360,16 +360,19 @@ def _parse_pdb_header_list(header):
                       None,
                       None]
             if strand[9]:
-                strand[10:20] = [hh[41:45],
-                                 hh[45:48],
-                                 hh[49],
-                                 int(hh[50:54]),
-                                 hh[54],
-                                 hh[56:60],
-                                 hh[60:63],
-                                 hh[64],
-                                 int(hh[65:69]),
-                                 hh[69]]
+                try:
+                    strand[10:20] = [hh[41:45],
+                                     hh[45:48],
+                                     hh[49],
+                                     int(hh[50:54]),
+                                     hh[54],
+                                     hh[56:60],
+                                     hh[60:63],
+                                     hh[64],
+                                     int(hh[65:69]),
+                                     hh[69]]
+                except Exception:
+                    continue
             res_id = (" ", strand[5], strand[6])
             try:
                 pdbh_dict["sheets"][res_id]
@@ -383,7 +386,26 @@ def _parse_pdb_header_list(header):
                         pdbh_dict["sheets"][res_id] = pdbh_dict["sheets"][res_id].append(strand)
                 else:                                               # is barrel
                     pdbh_dict["sheets"][res_id][10:20] = strand[10:20]
-            
+            old_strand = strand
+        elif key == "SSBOND":
+            res_id_1 = (" ", hh[17:21], hh[21])
+            res_id_2 = (" ", hh[31:35], hh[35])
+            pdbh_dict["ss_bonds"][res_id_1] = [int(hh[7:10]),
+                                               hh[11:14],
+                                               hh[15],
+                                               int(hh[17:21]),
+                                               hh[21],
+                                               hh[25:28],
+                                               hh[29],
+                                               int(hh[31:35]),
+                                               hh[35],
+                                               int(hh[59:65]),
+                                               int(hh[66:72]),
+                                               float(hh[73:78])]
+            pdbh_dict["ss_bonds"][res_id_2] = [pdbh_dict["ss_bonds"][res_id_1][0]]
+            pdbh_dict["ss_bonds"][res_id_2][1:5] = pdbh_dict["ss_bonds"][res_id_1][5:9]
+            pdbh_dict["ss_bonds"][res_id_2][5:9] = pdbh_dict["ss_bonds"][res_id_1][1:5]
+            pdbh_dict["ss_bonds"][res_id_2][9:12] = pdbh_dict["ss_bonds"][res_id_1][9:12]
         else:
             # print(key)
             pass

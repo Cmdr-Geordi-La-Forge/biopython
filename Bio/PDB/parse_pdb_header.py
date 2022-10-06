@@ -194,20 +194,45 @@ def _parse_pdb_header_list(header):
         "source": {"1": {"misc": ""}},
         "has_missing_residues": False,
         "missing_residues": [],
-        "helices": {},
-        "sheets": {},
-        "ss_bonds": {},
-        "links": {},
-        "cis_peptides": {},
-        "sites": {},
+        "helices": [],
+        "sheets": [],
+        "ss_bonds": [],
+        "links": [],
+        "cis_peptides": [],
+        "sites": [],
     }
+
+    def __get_helix_type(i):
+        if   i ==  1:
+            return "Right-handed alpha"
+        elif i ==  2:
+            return "Right-handed omega"
+        elif i ==  3:
+            return "Right-handed pi"
+        elif i ==  4:
+            return "Right-handed gamma"
+        elif i ==  5:
+            return "Right-handed 310"
+        elif i ==  6:
+            return "Left-handed alpha"
+        elif i ==  7:
+            return "Left-handed omega"
+        elif i ==  8:
+            return "Left-handed gamma"
+        elif i ==  9:
+            return "27 ribbon/helix"
+        elif i == 10:
+            return "Polyproline"
+        else:
+            return None
 
     pdbh_dict["structure_reference"] = _get_references(header)
     pdbh_dict["journal_reference"] = _get_journal(header)
     comp_molid = "1"
     last_comp_key = "misc"
     last_src_key = "misc"
-    old_sheet_id = ""
+    sheets = []
+    n_res_site = 0
 
     for hh in header:
         h = re.sub(r"[\s\n\r]*\Z", "", hh)  # chop linebreaks off
@@ -322,90 +347,117 @@ def _parse_pdb_header_list(header):
                                 remark_99_keyval[0]: remark_99_keyval[1]
                             }
                         else:
-                            pdbh_dict["astral"][remark_99_keyval[0]] = remark_99_keyval[
-                                1
-                            ]
+                            pdbh_dict["astral"][remark_99_keyval[0]] = remark_99_keyval[1]
         elif key == "HELIX":
-            pdbh_dict["helices"][(" ", int(hh[21:25]), hh[25])] = [int(hh[7:10]),
-                                                                   hh[11:14],
-                                                                   hh[15:18],
-                                                                   hh[19],
-                                                                   int(hh[21:25]),
-                                                                   hh[25],
-                                                                   hh[27:30],
-                                                                   int(hh[33:37]),
-                                                                   hh[37],
-                                                                   int(hh[38:40]),
-                                                                   hh[40:70].strip(),
-                                                                   int(hh[71:76])]
+            pdbh_dict["helices"].append({"serial_number":               int(hh[ 7:10]),
+                                         "helix_id":                        hh[11:14],
+                                         "initial_residue_name":            hh[15:18],
+                                         "chain_id":                        hh[19],
+                                         "initial_sequence_number":     int(hh[21:25]),
+                                         "initial_insertation_code":        hh[25],
+                                         "terminal_residue_name":           hh[27:30].strip(),
+                                         "terminal_sequence_number":    int(hh[33:37]),
+                                         "terminal_insertation_code":       hh[37],
+                                         "class_number":                int(hh[38:40]),
+                                         "helix_type": __get_helix_type(int(hh[38:40])),
+                                         "comment":                         hh[40:70].strip(),
+                                         "length":                      int(hh[71:76])})
         elif key == "SHEET":
-            strand = [int(hh[7:10]),
-                      hh[11:14],
-                      int(hh[14:16]),
-                      hh[17:20],
-                      hh[21],
-                      int(hh[22:26]),
-                      hh[26],
-                      hh[28:31],
-                      hh[32],
-                      int(hh[38:40]),
-                      None,
-                      None,
-                      None,
-                      None,
-                      None,
-                      None,
-                      None,
-                      None,
-                      None,
-                      None]
-            if strand[9]:
-                try:
-                    strand[10:20] = [hh[41:45],
-                                     hh[45:48],
-                                     hh[49],
-                                     int(hh[50:54]),
-                                     hh[54],
-                                     hh[56:60],
-                                     hh[60:63],
-                                     hh[64],
-                                     int(hh[65:69]),
-                                     hh[69]]
-                except Exception:
-                    continue
-            res_id = (" ", strand[5], strand[6])
+            strand = {"strand":                   int(hh[ 7:10]),
+                      "sheet_id":                     hh[11:14],
+                      "number_of_strands":        int(hh[14:16]),
+                      "initial_residue_name":         hh[17:20].strip(),
+                      "initial_chain_id":             hh[21],
+                      "initial_sequence_number":  int(hh[22:26]),
+                      "initial_insertation_code":     hh[26],
+                      "terminal_residue_name":        hh[28:31].strip(),
+                      "terminal_chain_id":            hh[32],
+                      "terminal_sequence_number": int(hh[33:37]),
+                      "terminal_insertation_code":    hh[37],
+                      "sense":                    int(hh[38:40]),
+                      "current_atom_name":            None,
+                      "current_residue_name":         None,
+                      "current_chain_id":             None,
+                      "current_sequence_number":      None,
+                      "current_insertation_code":     None,
+                      "previous_atom_name":           None,
+                      "previous_residue_name":        None,
+                      "previous_chain_id":            None,
+                      "previous_sequence_number":     None,
+                      "previous_insertation_code":    None}
             try:
-                pdbh_dict["sheets"][res_id]
-            except Exception:                                   # empty entry
-                pdbh_dict["sheets"][res_id] = strand
+                strand[10:20] = {"current_atom_name":            hh[41:45],
+                                 "current_residue_name":         hh[45:48].strip(),
+                                 "current_chain_id":             hh[49],
+                                 "current_sequence_number":  int(hh[50:54]),
+                                 "current_insertation_code":     hh[54],
+                                 "previous_atom_name":           hh[56:60],
+                                 "previous_residue_name":        hh[60:63].strip(),
+                                 "previous_chain_id":            hh[64],
+                                 "previous_sequence_number": int(hh[65:69]),
+                                 "previous_insertation_code":    hh[69]}
+            except Exception:
+                pass
+            if strand["sheet_id"] in sheets:
+                pdbh_dict["sheets"][-1].append(strand)
             else:
-                if pdbh_dict["sheets"][res_id][9]:                  # is forked sheet
-                    if isinstance(pdbh_dict["sheets"][res_id][0], int): # if 1st entry is not a list create one
-                        pdbh_dict["sheets"][res_id] = [pdbh_dict["sheets"][res_id]].append(strand)
-                    else:                                               # append to the list
-                        pdbh_dict["sheets"][res_id] = pdbh_dict["sheets"][res_id].append(strand)
-                else:                                               # is barrel
-                    pdbh_dict["sheets"][res_id][10:20] = strand[10:20]
-            old_strand = strand
+                pdbh_dict["sheets"].append([strand])
+                sheets.append(strand["sheet_id"])
         elif key == "SSBOND":
-            res_id_1 = (" ", hh[17:21], hh[21])
-            res_id_2 = (" ", hh[31:35], hh[35])
-            pdbh_dict["ss_bonds"][res_id_1] = [int(hh[7:10]),
-                                               hh[11:14],
-                                               hh[15],
-                                               int(hh[17:21]),
-                                               hh[21],
-                                               hh[25:28],
-                                               hh[29],
-                                               int(hh[31:35]),
-                                               hh[35],
-                                               int(hh[59:65]),
-                                               int(hh[66:72]),
-                                               float(hh[73:78])]
-            pdbh_dict["ss_bonds"][res_id_2] = [pdbh_dict["ss_bonds"][res_id_1][0]]
-            pdbh_dict["ss_bonds"][res_id_2][1:5] = pdbh_dict["ss_bonds"][res_id_1][5:9]
-            pdbh_dict["ss_bonds"][res_id_2][5:9] = pdbh_dict["ss_bonds"][res_id_1][1:5]
-            pdbh_dict["ss_bonds"][res_id_2][9:12] = pdbh_dict["ss_bonds"][res_id_1][9:12]
+            pdbh_dict["ss_bonds"].append({"serial_number":       int(hh[7:10]),
+                                          "chain_id_1":              hh[15],
+                                          "sequence_number_1":   int(hh[17:21]),
+                                          "insertaion_code_1":       hh[21],
+                                          "chain_id_2":              hh[29],
+                                          "sequence_number_2":   int(hh[31:35]),
+                                          "insertation_code_2":      hh[35],
+                                          "symmetry_operator_1": int(hh[59:65]),
+                                          "symmetry_operator_2": int(hh[66:72]),
+                                          "bond_distance":     float(hh[73:78])})
+        elif key == "LINK":
+            pdbh_dict["links"].append({"atom_name_1":                   hh[12:16],
+                                       "alt_loc_1":                     hh[17],
+                                       "residue_name_1":                hh[17:20].strip(),
+                                       "chain_id_1":                    hh[22],
+                                       "residue_sequence_number_1": int(hh[22:26]),
+                                       "insertaion_code_1":             hh[26],
+                                       "atom_name_2":                   hh[42:46],
+                                       "alt_loc_2":                     hh[46],
+                                       "residue_name_2":                hh[47:50].strip(),
+                                       "chain_id_2":                    hh[51],
+                                       "residue_sequence_number_2": int(hh[52:56]),
+                                       "insertaion_code_2":             hh[56],
+                                       "symmetry_operator_1":       int(hh[59:65]),
+                                       "symmetry_operator_2":       int(hh[66:72]),
+                                       "link_distance":           float(hh[73:78])})
+        elif key == "CISPEP":
+            pdbh_dict["cis_peptides"].append({"serial_number":                 hh[ 7:10],
+                                              "residue_name_1":                hh[11:14].strip(),
+                                              "chain_id_1":                    hh[15],
+                                              "residue_sequence_number_1": int(hh[17:21]),
+                                              "insertaion_code_1":             hh[21],
+                                              "residue_name_2":                hh[25:28].strip(),
+                                              "chain_id_2":                    hh[29],
+                                              "residue_sequence_number_2": int(hh[31:35]),
+                                              "insertaion_code_2":             hh[35],
+                                              "model_number":              int(hh[43:46]),
+                                              "angle":                   float(hh[53:59])})
+        elif key == "SITE":
+            if not int(hh[7:10]) - 1:
+                n_res_site = int(hh[15:17])
+                pdbh_dict["sites"].append({"site_id": hh[11:14],
+                                           "residues": []})
+            if n_res_site < 4:
+                n_res_mod = n_res_site % 4
+            else:
+                n_res_mod = 4
+                n_res_site -= 4
+            site = [{"residue_name":                hh[i:i+3].strip(),
+                     "chain_id":                    hh[i+4],
+                     "residue_sequence_number": int(hh[i+5:i+9]),
+                     "insertation_code":            hh[i+10]}
+                    for i in range(18, 1 + n_res_mod * 11, 11)]
+            pdbh_dict["sites"][-1]["residues"] += site
         else:
             # print(key)
             pass

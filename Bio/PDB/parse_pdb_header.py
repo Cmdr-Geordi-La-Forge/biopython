@@ -411,9 +411,18 @@ def _parse_pdb_header_list(header):
                                           "chain_id_2":              hh[29],
                                           "sequence_number_2":   int(hh[31:35]),
                                           "insertation_code_2":      hh[35],
-                                          "symmetry_operator_1": int(hh[59:65]),
-                                          "symmetry_operator_2": int(hh[66:72]),
-                                          "bond_distance":     float(hh[73:78])})
+                                          "symmetry_operator_1":     None,
+                                          "symmetry_operator_2":     None,
+                                          "bond_distance":           None})
+            try:
+                pdbh_dict["ss_bonds"][-1]["bond_distance"] = float(hh[73:78])
+            except Exception:
+                pass
+            try:
+                pdbh_dict["ss_bonds"][-1]["symmetry_operator_1"] = int(hh[59:65])
+                pdbh_dict["ss_bonds"][-1]["symmetry_operator_2"] = int(hh[66:72])
+            except Exception:
+                pass
         elif key == "LINK":
             pdbh_dict["links"].append({"atom_name_1":                   hh[12:16],
                                        "alt_loc_1":                     hh[17],

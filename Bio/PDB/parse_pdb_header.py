@@ -374,7 +374,7 @@ def _parse_pdb_header_list(header):
                       "terminal_chain_id":            hh[32],
                       "terminal_sequence_number": int(hh[33:37]),
                       "terminal_insertation_code":    hh[37],
-                      "sense":                    int(hh[38:40]),
+                      "sense":                        None,
                       "current_atom_name":            None,
                       "current_residue_name":         None,
                       "current_chain_id":             None,
@@ -386,16 +386,27 @@ def _parse_pdb_header_list(header):
                       "previous_sequence_number":     None,
                       "previous_insertation_code":    None}
             try:
-                strand[10:20] = {"current_atom_name":            hh[41:45],
-                                 "current_residue_name":         hh[45:48].strip(),
-                                 "current_chain_id":             hh[49],
-                                 "current_sequence_number":  int(hh[50:54]),
-                                 "current_insertation_code":     hh[54],
-                                 "previous_atom_name":           hh[56:60],
-                                 "previous_residue_name":        hh[60:63].strip(),
-                                 "previous_chain_id":            hh[64],
-                                 "previous_sequence_number": int(hh[65:69]),
-                                 "previous_insertation_code":    hh[69]}
+                strand["sense"] = int(hh[38:40])
+            except Exception:
+                pass
+            try:
+                strand["current_atom_name"]=             hh[41:45]
+                strand["current_residue_name"] =         hh[45:48].strip()
+                strand["current_chain_id"] =             hh[49]
+                strand["current_sequence_number"] =  int(hh[50:54])
+                strand["current_insertation_code"] =     hh[54]
+                strand["previous_atom_name"] =           hh[56:60]
+                strand["previous_residue_name"] =        hh[60:63].strip()
+                strand["previous_chain_id"] =            hh[64]
+                strand["previous_sequence_number"] = int(hh[65:69])
+                strand["previous_insertation_code"] =    hh[69]
+            except Exception:
+                pass
+            if strand["sheet_id"] in sheets:
+                pdbh_dict["sheets"][-1].append(strand)
+            else:
+                pdbh_dict["sheets"].append([strand])
+                sheets.append(strand["sheet_id"])
             except Exception:
                 pass
             if strand["sheet_id"] in sheets:
